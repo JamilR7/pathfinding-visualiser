@@ -4,29 +4,51 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
 
-function FindUser()
- {
-    const [position, setPosition] = useState(null)
-    const map = useMapEvents({
-      click() {
-        map.locate({enableHighAccuracy: true})
-      },
-      locationfound(e) {
-        setPosition(e.latlng)
-        map.flyTo(e.latlng, map.getZoom())
-      },
-    });
+function FindUser({ isLocating, setIsLocating }) {
+  const [position, setPosition] = useState(null)
+  const [accuracy, setAccuracy] = useState(null)
+  const map = useMapEvents({
+    locationfound: (location)=> {
+      if (isLocating) {
+        setPosition(location.latlng)
+        setAccuracy(location.accuracy); // Store the accuracy in meters
+        map.flyTo(location.latlng, map.getZoom());
+        setIsLocating(false);
+      }
+    }
+  })
+
+  if (isLocating) {
+    map.locate({maximumAge: 0, enableHighAccuracy: true });
+  }
 
     return position === null ? null : (
-      <Marker position = {position}>
-        <Popup>You are here</Popup>
-      </Marker>
-    );
- }
+    <Marker position={position}>
+      <Popup>
+        You are here
+        Accuracy: {accuracy ? `${accuracy} meters` : 'Unknown'} {/* Display the accuracy */}
+      </Popup>
+    </Marker>
+    )
+
+}
 
 function MapGPS(){
 
-    return(
+    const [isLocating, setIsLocating] = useState(false);
+
+    const handleButtonClick = () => {
+      setIsLocating(true);
+    };
+
+    return (
+      <div>
+        <button
+          className='FindUserButton'
+          onClick={handleButtonClick}
+        >
+          Detect location
+        </button>
   <MapContainer style={{ height: "500px", width: "800%" }} center={[54.0104, -2.7877]} zoom={15} scrollWheelZoom={true}>
   <TileLayer
     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -37,8 +59,9 @@ function MapGPS(){
       A pretty CSS3 popup. <br /> Easily customizable.
   </Popup>
 </Marker>
-<FindUser></FindUser>
+<FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
 </MapContainer>
+      </div>
     );
 }
 
