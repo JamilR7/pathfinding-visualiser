@@ -1,8 +1,13 @@
-import React, { useState } from 'react'
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
+import React, { useState, useEffect} from 'react'
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
+//routing
+import L, { Map, map } from 'leaflet';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import 'leaflet-routing-machine';
+
 
 function FindUser({ isLocating, setIsLocating }) {
   const [position, setPosition] = useState(null)
@@ -30,8 +35,27 @@ function FindUser({ isLocating, setIsLocating }) {
       </Popup>
     </Marker>
   )
-
 }
+
+  function Route() {
+    const map = useMap();
+
+    useEffect(() => {
+      if (!map) return;
+
+      const routingControl = L.Routing.control({
+        waypoints: [
+          L.latLng(54.1102751, -2.7854227),
+          L.latLng(54.007509, -2.784629)
+        ],
+        routeWhileDragging: true
+    }).addTo(map)
+
+    return () => map.removeControl(routingControl);
+  }, [map])
+  return null;
+  }
+
 
 function MapGPS() {
 
@@ -40,6 +64,7 @@ function MapGPS() {
   const handleButtonClick = () => {
     setIsLocating(true);
   };
+
 
   return (
     <div>
@@ -64,7 +89,7 @@ function MapGPS() {
         <Marker position={[54.010122, -2.7852353]}></Marker>
         <Marker position={[54.007509, -2.784629]}></Marker>
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
-        <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
+        <Route/>
       </MapContainer>
     </div>
   );
