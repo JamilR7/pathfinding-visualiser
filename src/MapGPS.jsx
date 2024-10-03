@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, useMapEvents, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
@@ -7,6 +7,7 @@ import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import L, { Map, map } from 'leaflet';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
+import axios from 'axios'
 
 
 function FindUser({ isLocating, setIsLocating }) {
@@ -37,33 +38,57 @@ function FindUser({ isLocating, setIsLocating }) {
   )
 }
 
-  function Route() {
-    const map = useMap();
+function Route() {
+  const map = useMap();
 
-    useEffect(() => {
-      if (!map) return;
+  useEffect(() => {
+    if (!map) return;
 
-      const routingControl = L.Routing.control({
-        waypoints: [
-          L.latLng(54.1102751, -2.7854227),
-          L.latLng(54.007509, -2.784629)
-        ],
-        routeWhileDragging: true
+    const routingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(53.4280054, -2.1992618),
+        L.latLng(54.007509, -2.784629)
+      ],
+      routeWhileDragging: true
     }).addTo(map)
 
     return () => map.removeControl(routingControl);
   }, [map])
   return null;
-  }
+}
+
+
 
 
 function MapGPS() {
 
   const [isLocating, setIsLocating] = useState(false);
+  const [roadData, setRoadData] = useState(null);
 
   const handleButtonClick = () => {
     setIsLocating(true);
   };
+
+  useEffect(() => {
+
+    const query = `
+    [out:json];
+    way["highway"](around:500,54.00375, -2.788841);
+
+    out body;
+    >;
+    out skel qt;
+  `;
+
+    axios.post('https://overpass-api.de/api/interpreter', (query))
+      .then(res => {
+        setRoadData(res.data)
+        console.log(res.data)
+      })
+      .catch(err => {
+
+      })
+  }, []);
 
 
   return (
@@ -74,6 +99,7 @@ function MapGPS() {
       >
         Detect location
       </button>
+      {roadData ? <p>Road data loaded!</p> : <p>Loading road data...</p>}
       <MapContainer style={{ height: "500px", width: "800%" }} center={[54.0104, -2.7877]} zoom={15} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -89,10 +115,15 @@ function MapGPS() {
         <Marker position={[54.010122, -2.7852353]}></Marker>
         <Marker position={[54.007509, -2.784629]}></Marker>
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
-        <Route/>
+        <Route />
       </MapContainer>
     </div>
   );
 }
 
 export default MapGPS
+
+// learn to use axios
+// write overpass query
+// call query using overpass
+// start with highway data
