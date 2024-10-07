@@ -73,20 +73,35 @@ function MapGPS() {
 
     const query = `
     [out:json];
-    way["highway"](around:500,54.00375, -2.788841);
-
-    out body;
-    >;
-    out skel qt;
-  `;
+    way["highway"](around:500,54.00375,-2.788841);
+    out body;     // First output for ways and their tags/nodes
+    (._;>;);      // This grabs the related nodes (node IDs from ways)
+    out skel qt;  // Output the node data with latitudes and longitudes
+    `;
 
     axios.post('https://overpass-api.de/api/interpreter', (query))
       .then(res => {
         setRoadData(res.data)
         console.log(res.data)
+
+        const nodesMap = {};
+
+        res.data.elements.forEach(element => {
+          if (element.type === 'way') {
+            const wayNodes = element.nodes; //store the node array but we cant get coordinate from this 
+            wayNodes.forEach(nodeId => {
+              const node = res.data.elements.find(n => n.id === nodeId);
+              if (node) {
+                nodesMap[nodeId] = { lat: node.lat, lon: node.lon };
+              }
+            })
+          }
+        })
+        console.log('Nodes:', nodesMap);
+
       })
       .catch(err => {
-
+        console.log(err)
       })
   }, []);
 
@@ -122,8 +137,3 @@ function MapGPS() {
 }
 
 export default MapGPS
-
-// learn to use axios
-// write overpass query
-// call query using overpass
-// start with highway data
