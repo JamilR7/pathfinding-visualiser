@@ -46,8 +46,8 @@ function Route() {
 
     const routingControl = L.Routing.control({
       waypoints: [
-        L.latLng(53.4280054, -2.1992618),
-        L.latLng(54.007509, -2.784629)
+        L.latLng(51.76335, -1.237869),
+        L.latLng(51.75957, -1.23549)
       ],
       routeWhileDragging: true
     }).addTo(map)
@@ -56,9 +56,6 @@ function Route() {
   }, [map])
   return null;
 }
-
-
-
 
 function MapGPS() {
 
@@ -73,7 +70,7 @@ function MapGPS() {
 
     const query = `
     [out:json];
-    way["highway"](around:500,54.00375,-2.788841);
+    way["highway"](around:500,51.75803,-1.26201);
     out body;     // First output for ways and their tags/nodes
     (._;>;);      // This grabs the related nodes (node IDs from ways)
     out skel qt;  // Output the node data with latitudes and longitudes
@@ -115,20 +112,20 @@ function MapGPS() {
         Detect location
       </button>
       {roadData ? <p>Road data loaded!</p> : <p>Loading road data...</p>}
-      <MapContainer style={{ height: "500px", width: "800%" }} center={[54.0104, -2.7877]} zoom={15} scrollWheelZoom={true}>
+      <MapContainer style={{ height: "500px", width: "800%" }} center={[51.758038, -1.26201]} zoom={15} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[51.505, -0.09]}>
+        <Marker position={[51.758038, -1.26201]}>
           <Popup>
             A pretty CSS3 popup. <br /> Easily customizable.
           </Popup>
         </Marker>
-        <Marker position={[54.00375, -2.788841]}></Marker>
-        <Marker position={[54.0102751, -2.7854227]}></Marker>
-        <Marker position={[54.010122, -2.7852353]}></Marker>
-        <Marker position={[54.007509, -2.784629]}></Marker>
+        <Marker position={[51.761207, -1.267475]}></Marker>
+        <Marker position={[51.76965, -1.254212]}></Marker>
+        <Marker position={[51.74778, -1.23687]}></Marker>
+        <Marker position={[51.749406, -1.26109]}></Marker>
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
         <Route />
       </MapContainer>
@@ -137,3 +134,8 @@ function MapGPS() {
 }
 
 export default MapGPS
+
+// learn adjacency list for graphs
+// learn to build graph from coordinates
+// learn the pathfinding algorithms 
+// learn how to use deckGL
