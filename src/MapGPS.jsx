@@ -69,6 +69,7 @@ function MapGPS() {
 
         ways.forEach(way => {
           const wayNodes = way.nodes;
+          const checkOneWay = way.tags.oneway === 'yes' || way.tags.oneway === 'true';
 
           for (let i = 0; i < wayNodes.length - 1; i++) {
             const currentNodeId = wayNodes[i];
@@ -80,7 +81,7 @@ function MapGPS() {
             let distance;
 
             if (currentNode && nextNode) {
-              const distance = calculateDistance(
+              distance = calculateDistance(
                 currentNode.lat,
                 currentNode.lon,
                 nextNode.lat,
@@ -91,14 +92,15 @@ function MapGPS() {
             if (!adjacencyList[currentNodeId]) {
               adjacencyList[currentNodeId] = [];
             }
-            if (!adjacencyList[nextNodeId]) {
-              adjacencyList[nextNodeId] = [];
-            }
 
             adjacencyList[currentNodeId].push({
               neighbour: nextNodeId,
               distance: distance,
             });
+
+            if (!adjacencyList[nextNodeId]) {
+              adjacencyList[nextNodeId] = [];
+            }
 
             adjacencyList[nextNodeId].push({
               neighbour: currentNodeId,
