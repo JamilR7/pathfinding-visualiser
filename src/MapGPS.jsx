@@ -36,12 +36,15 @@ function MapGPS() {
         setRoadData(res.data)
         console.log(res.data)
 
+        //grabbing ways
         const ways = res.data.elements.filter(element => element.type === 'way' && element.tags && element.tags.highway);
         console.log('Ways:', ways);
 
-        const nodesMap = {};
-        const nodeUsageCount = {};
+        const nodesMap = {}; //storing lat lon coordinates for all nodes
+        const nodeUsageCount = {}; //checking whether a node is shared between other ways hence an intersection point
+        const adjacencyList = {};
 
+        //algorithm to determine intersection points
         ways.forEach(way => {
           way.nodes.forEach(nodeId => {
             if (nodeUsageCount[nodeId]) {
@@ -53,12 +56,60 @@ function MapGPS() {
           });
         });
 
+        //sets are unique so add intersection points into a set
         const IntersectionNodes = new Set(
           Object.keys(nodeUsageCount).filter(nodeId => nodeUsageCount[nodeId] > 1)
         );
 
         console.log('Intersections:', IntersectionNodes);
 
+        function calculateDistance(currentLat, currentLon, nextLat, nextLon) {
+          return 5;
+        }
+
+        ways.forEach(way => {
+          const wayNodes = way.nodes;
+
+          for (let i = 0; i < wayNodes.length - 1; i++) {
+            const currentNodeId = wayNodes[i];
+            const nextNodeId = wayNodes[i+1];
+
+            const currentNode = nodesMap[currentNodeId];
+            const nextNode = nodesMap[nextNodeId];
+            
+            let distance;
+
+            if (currentNode && nextNode) {
+              const distance = calculateDistance(
+                currentNode.lat,
+                currentNode.lon,
+                nextNode.lat,
+                nextNode.lon
+            );
+            }
+
+            if (!adjacencyList[currentNodeId]) {
+              adjacencyList[currentNodeId] = [];
+            }
+            if (!adjacencyList[nextNodeId]) {
+              adjacencyList[nextNodeId] = [];
+            }
+
+            adjacencyList[currentNodeId].push({
+              neighbour: nextNodeId,
+              distance: distance,
+            });
+
+            adjacencyList[nextNodeId].push({
+              neighbour: currentNodeId,
+              distance: distance,
+            });
+          }
+        })
+
+        console.log("Adjacency List: ", adjacencyList);
+
+        //grabbing the node array making up ways and then for each node in that array we search for its corresponding nodeId to grab the lat and lon
         res.data.elements.forEach(element => {
           if (element.type === 'way') {
             const wayNodes = element.nodes; //store the node array but we cant get coordinate from this 
