@@ -3,59 +3,14 @@ import { MapContainer, TileLayer, useMapEvents, Marker, Popup, useMap } from 're
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
+import FindUser from './FindUser';
+import Route from './Route';
 //routing
-import L, { Map, map } from 'leaflet';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
+//api
 import axios from 'axios'
 
-
-function FindUser({ isLocating, setIsLocating }) {
-  const [position, setPosition] = useState(null)
-  const [accuracy, setAccuracy] = useState(null)
-  const map = useMapEvents({
-    locationfound: (location) => {
-      if (isLocating) {
-        setPosition(location.latlng)
-        setAccuracy(location.accuracy); // Store the accuracy in meters
-        map.flyTo(location.latlng, map.getZoom());
-        setIsLocating(false);
-      }
-    }
-  })
-
-  if (isLocating) {
-    map.locate({ maximumAge: 0, enableHighAccuracy: true });
-  }
-
-  return position === null ? null : (
-    <Marker position={position}>
-      <Popup>
-        You are here
-        Accuracy: {accuracy ? `${accuracy} meters` : 'Unknown'} {/* Display the accuracy */}
-      </Popup>
-    </Marker>
-  )
-}
-
-function Route() {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map) return;
-
-    const routingControl = L.Routing.control({
-      waypoints: [
-        L.latLng(51.76335, -1.237869),
-        L.latLng(51.75957, -1.23549)
-      ],
-      routeWhileDragging: true
-    }).addTo(map)
-
-    return () => map.removeControl(routingControl);
-  }, [map])
-  return null;
-}
 
 function MapGPS() {
 
@@ -81,7 +36,28 @@ function MapGPS() {
         setRoadData(res.data)
         console.log(res.data)
 
+        const ways = res.data.elements.filter(element => element.type === 'way' && element.tags && element.tags.highway);
+        console.log('Ways:', ways);
+
         const nodesMap = {};
+        const nodeUsageCount = {};
+
+        ways.forEach(way => {
+          way.nodes.forEach(nodeId => {
+            if (nodeUsageCount[nodeId]) {
+              nodeUsageCount[nodeId]++;
+            }
+            else {
+              nodeUsageCount[nodeId] = 1;
+            }
+          });
+        });
+
+        const IntersectionNodes = new Set(
+          Object.keys(nodeUsageCount).filter(nodeId => nodeUsageCount[nodeId] > 1)
+        );
+
+        console.log('Intersections:', IntersectionNodes);
 
         res.data.elements.forEach(element => {
           if (element.type === 'way') {
