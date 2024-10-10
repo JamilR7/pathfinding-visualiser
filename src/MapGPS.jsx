@@ -145,6 +145,30 @@ function MapGPS() {
       })
   }, []);
 
+  class PriorityQueue {
+    constructor() {
+      this.elements = [];
+    }
+
+    enqueue(item, priority) {
+      this.elements.push({ item, priority });
+      this.elements.sort((a, b) => a.priority - b.priority);
+    }
+
+    dequeue() {
+      return this.elements.shift().item; //pops first element of the array
+    }
+
+    isEmpty() {
+      return this.elements.length === 0;
+    }
+
+    contains() {
+      return this.elements.some(element => element.item === item);
+    }
+  }
+
+
 
   return (
     <div>
@@ -178,7 +202,34 @@ function MapGPS() {
 
 export default MapGPS
 
-// learn adjacency list for graphs
-// learn to build graph from coordinates
 // learn the pathfinding algorithms 
 // learn how to use deckGL
+
+// A* Search
+// for each cell, store h(x), f(x), g(x), (its own coordinates)
+// open set are nodes that still need to be evaluated
+// closed set are nodes do not
+// algo is complete when open set is empty (no solution) or if you arrive at the end (optimal path)
+// initialise start node / end node
+// openSet.push(start)
+// while (open set length is not empty) => keep going else no solution 
+// visualise the sets for debugging
+// current is the node that has the lowest f(x) in the open set
+// loop through open set and find the node whos f(x) is lowest i.e winner
+// if the winner == end - solution found
+// if its not the end then push to closedSet and remove from the open set
+// now begin evaluating the neighbours of current by adding to open set 
+// once we moved to a neighbour, we need to increase g(x) by distance between them, (g(x) = 0 at the start node), so + to what g(x) was previously (current.g + distance)
+// but only change g(x) if the neighbour isnt already in the closed set
+// the g(x) we change is temporary
+// because we need to check if the neighbour is already in the open set, then we need to compare g's to see which is better path 
+// if temp_g < neighbours g then set neighbour g to that temp_g
+// if its not in the open set then neighbour.g = temp_g and push that neighbour to the open set
+// the heuristic h = heuristic(neighbour, end) (educated guess to the end node in terms of distance)
+// function heuristic(a,b) 
+// find manhattan distance between the start and end node
+// the neighbours f(x) is g(x) + h(x) (score)
+// keep tracking of the path, neighbour.previous = current
+// var path, where current === end, path = [], temp = current, path.push(current), while (temp.previous exists), path.push(temp.previous), temp = temp.previous (backtracking)
+// loop through the path, path[i] show with some color (path blue, open set green, closed set red)
+// add var no_solution, if there is no solution set true, return
