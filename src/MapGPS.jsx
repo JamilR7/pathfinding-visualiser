@@ -226,7 +226,21 @@ function MapGPS() {
   return null;
 }
 
+  function calculateNearestNode(lat, lon) {
+    let nearestNode = null;
+    let minDistance = Infinity;
 
+    for (const node in nodesMap) {
+      const node = nodesMap[nodeId]
+      const distance = calculateDistance(lat, lon, node.lat, node.lon);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestNode = nodeId;
+      }
+    }
+    return nearestNode;
+  }
 
 
 
