@@ -177,6 +177,55 @@ function MapGPS() {
     return calculateDistance(lat1, lon1, lat2, lon2);
   }
 
+  function aStar(startNode, endNode, adjacencyList) {
+    const openSet = new PriorityQueue();
+
+    openSet.enqueue(startNode, 0)
+
+    const cameFrom = {};
+
+    const gScore = {};
+    gScore[startNode] = 0;
+
+    const fScore = {};
+
+    fScore[startNode] = heuristic(startNode, endNode);
+
+    while (!openSet.isEmpty()) {
+      const current = openSet.dequeue();
+
+      if (current === endNode) {
+        const path = [];
+        let temp = current;
+        while (temp in cameFrom) {
+          path.push(temp);
+          temp = cameFrom[temp];
+        }
+        path.push(startNode);
+        return path.reverse();
+      }
+    }
+
+    const neighbors = adjacencyList[current] || [];
+    neighbors.forEach(({ neighbor, distance}) => {
+      const tentativeGScore = gScore[current] + distance;
+
+      if (!neighbour in gScore || tentativeGScore < gScore[neighbor]) {
+        cameFrom[neighbor] = current;
+        gScore[neighbor] = tentativeGScore;
+
+        fScore[neighbor] = gScore[neighbor] + heuristic(neighbor, endNode);
+
+        if (!openSet.contains(neighbor)) {
+          openSet.enqueue(neighbor, fScore[neighbor]);
+        }
+      }
+
+    });
+  }
+  return null;
+}
+
 
 
 
