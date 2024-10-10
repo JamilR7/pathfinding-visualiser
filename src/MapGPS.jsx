@@ -64,8 +64,35 @@ function MapGPS() {
         console.log('Intersections:', IntersectionNodes);
 
         function calculateDistance(currentLat, currentLon, nextLat, nextLon) {
-          return 5;
+          //Harvesine Formula Implementation
+
+          const earthRadius = 6371e3;
+          const convertToRadians = angle => (angle * Math.PI) / 180;
+
+          const φ1 = convertToRadians(currentLat);
+          const φ2 = convertToRadians(nextLat);
+          const Δφ = convertToRadians(nextLat - currentLat);
+          const Δλ = convertToRadians(nextLon - currentLon);
+
+          const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+          const c = 2 * Math.atan(Math.sqrt(a), Math.sqrt(1 - a));
+
+          return earthRadius * c;
         }
+
+        //grabbing the node array making up ways and then for each node in that array we search for its corresponding nodeId to grab the lat and lon
+        res.data.elements.forEach(element => {
+          if (element.type === 'way') {
+            const wayNodes = element.nodes; //store the node array but we cant get coordinate from this 
+            wayNodes.forEach(nodeId => {
+              const node = res.data.elements.find(n => n.id === nodeId);
+              if (node) {
+                nodesMap[nodeId] = { lat: node.lat, lon: node.lon };
+              }
+            })
+          }
+        })
+        console.log('Nodes:', nodesMap);
 
         ways.forEach(way => {
           const wayNodes = way.nodes;
@@ -94,37 +121,24 @@ function MapGPS() {
             }
 
             adjacencyList[currentNodeId].push({
-              neighbour: nextNodeId,
+              neighbor: nextNodeId,
               distance: distance,
             });
 
-            if (!adjacencyList[nextNodeId]) {
-              adjacencyList[nextNodeId] = [];
-            }
+            if (!checkOneWay) {
+              if (!adjacencyList[nextNodeId]) {
+                adjacencyList[nextNodeId] = [];
+              }
 
-            adjacencyList[nextNodeId].push({
-              neighbour: currentNodeId,
-              distance: distance,
+              adjacencyList[nextNodeId].push({
+                neighbour: currentNodeId,
+                distance: distance,
             });
           }
-        })
+        }
+      });
 
         console.log("Adjacency List: ", adjacencyList);
-
-        //grabbing the node array making up ways and then for each node in that array we search for its corresponding nodeId to grab the lat and lon
-        res.data.elements.forEach(element => {
-          if (element.type === 'way') {
-            const wayNodes = element.nodes; //store the node array but we cant get coordinate from this 
-            wayNodes.forEach(nodeId => {
-              const node = res.data.elements.find(n => n.id === nodeId);
-              if (node) {
-                nodesMap[nodeId] = { lat: node.lat, lon: node.lon };
-              }
-            })
-          }
-        })
-        console.log('Nodes:', nodesMap);
-
       })
       .catch(err => {
         console.log(err)
