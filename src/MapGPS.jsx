@@ -168,6 +168,17 @@ function MapGPS() {
     }
   }
 
+  function heuristic(start, end) {
+    const lat1 = nodesMap[nodeA].lat;
+    const lon1 = nodesMap[nodeA].lon;
+    const lat2 = nodesMap[nodeB].lat;
+    const lon2 = nodesMap[nodeB].lon;
+    
+    return calculateDistance(lat1, lon1, lat2, lon2);
+  }
+
+
+
 
 
   return (
