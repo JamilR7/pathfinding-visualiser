@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
 import FindUser from './FindUser';
 import Route from './Route';
+import SelectPoints from './selectPoints';
 //routing
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
@@ -16,10 +17,34 @@ function MapGPS() {
 
   const [isLocating, setIsLocating] = useState(false);
   const [roadData, setRoadData] = useState(null);
+  const [path, setPath] = useState(null);
+  const [adjacencyList, setAdjacencyList] = useState(null);
+  const [startNode, setStartNode] = useState(null);
+  const [endNode, setEndNode] = useState(null);
+  const [selectedPoints, setSelectedPoints] = useState([]);
+  const [nodesMap, setNodesMap] = useState(null)
 
   const handleButtonClick = () => {
     setIsLocating(true);
   };
+
+  function calculateDistance(currentLat, currentLon, nextLat, nextLon) {
+    //Harvesine Formula Implementation
+
+    const earthRadius = 6371e3;
+    const convertToRadians = angle => (angle * Math.PI) / 180;
+
+    const φ1 = convertToRadians(currentLat);
+    const φ2 = convertToRadians(nextLat);
+    const Δφ = convertToRadians(nextLat - currentLat);
+    const Δλ = convertToRadians(nextLon - currentLon);
+
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    const c = 2 * Math.atan(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return earthRadius * c;
+  }
+
 
   useEffect(() => {
 
@@ -40,9 +65,9 @@ function MapGPS() {
         const ways = res.data.elements.filter(element => element.type === 'way' && element.tags && element.tags.highway);
         console.log('Ways:', ways);
 
-        const nodesMap = {}; //storing lat lon coordinates for all nodes
+        const newNodesMap = {}; //storing lat lon coordinates for all nodes
         const nodeUsageCount = {}; //checking whether a node is shared between other ways hence an intersection point
-        const adjacencyList = {};
+        const adjacency = {};
 
         //algorithm to determine intersection points
         ways.forEach(way => {
@@ -63,23 +88,6 @@ function MapGPS() {
 
         console.log('Intersections:', IntersectionNodes);
 
-        function calculateDistance(currentLat, currentLon, nextLat, nextLon) {
-          //Harvesine Formula Implementation
-
-          const earthRadius = 6371e3;
-          const convertToRadians = angle => (angle * Math.PI) / 180;
-
-          const φ1 = convertToRadians(currentLat);
-          const φ2 = convertToRadians(nextLat);
-          const Δφ = convertToRadians(nextLat - currentLat);
-          const Δλ = convertToRadians(nextLon - currentLon);
-
-          const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-          const c = 2 * Math.atan(Math.sqrt(a), Math.sqrt(1 - a));
-
-          return earthRadius * c;
-        }
-
         //grabbing the node array making up ways and then for each node in that array we search for its corresponding nodeId to grab the lat and lon
         res.data.elements.forEach(element => {
           if (element.type === 'way') {
@@ -87,12 +95,13 @@ function MapGPS() {
             wayNodes.forEach(nodeId => {
               const node = res.data.elements.find(n => n.id === nodeId);
               if (node) {
-                nodesMap[nodeId] = { lat: node.lat, lon: node.lon };
+                newNodesMap[nodeId] = { lat: node.lat, lon: node.lon };
               }
             })
           }
         })
-        console.log('Nodes:', nodesMap);
+        setNodesMap(newNodesMap);
+        console.log('Nodes:', newNodesMap);
 
         ways.forEach(way => {
           const wayNodes = way.nodes;
@@ -102,8 +111,8 @@ function MapGPS() {
             const currentNodeId = wayNodes[i];
             const nextNodeId = wayNodes[i+1];
 
-            const currentNode = nodesMap[currentNodeId];
-            const nextNode = nodesMap[nextNodeId];
+            const currentNode = newNodesMap[currentNodeId];
+            const nextNode = newNodesMap[nextNodeId];
             
             let distance;
 
@@ -116,21 +125,21 @@ function MapGPS() {
             );
             }
 
-            if (!adjacencyList[currentNodeId]) {
-              adjacencyList[currentNodeId] = [];
+            if (!adjacency[currentNodeId]) {
+              adjacency[currentNodeId] = [];
             }
 
-            adjacencyList[currentNodeId].push({
-              neighbor: nextNodeId,
+            adjacency[currentNodeId].push({
+              neighbour: nextNodeId,
               distance: distance,
             });
 
             if (!checkOneWay) {
-              if (!adjacencyList[nextNodeId]) {
-                adjacencyList[nextNodeId] = [];
+              if (!adjacency[nextNodeId]) {
+                adjacency[nextNodeId] = [];
               }
 
-              adjacencyList[nextNodeId].push({
+              adjacency[nextNodeId].push({
                 neighbour: currentNodeId,
                 distance: distance,
             });
@@ -138,7 +147,8 @@ function MapGPS() {
         }
       });
 
-        console.log("Adjacency List: ", adjacencyList);
+        setAdjacencyList(adjacency);
+        console.log("Adjacency List: ", adjacency);
       })
       .catch(err => {
         console.log(err)
@@ -163,21 +173,26 @@ function MapGPS() {
       return this.elements.length === 0;
     }
 
-    contains() {
+    contains(item) {
       return this.elements.some(element => element.item === item);
+    }
+
+    getElements() {
+      return [...this.elements]; // Return a shallow copy of the elements
     }
   }
 
   function heuristic(start, end) {
-    const lat1 = nodesMap[nodeA].lat;
-    const lon1 = nodesMap[nodeA].lon;
-    const lat2 = nodesMap[nodeB].lat;
-    const lon2 = nodesMap[nodeB].lon;
+    const lat1 = nodesMap[start].lat;
+    const lon1 = nodesMap[start].lon;
+    const lat2 = nodesMap[end].lat;
+    const lon2 = nodesMap[end].lon;
     
     return calculateDistance(lat1, lon1, lat2, lon2);
   }
 
   function aStar(startNode, endNode, adjacencyList) {
+
     const openSet = new PriorityQueue();
 
     openSet.enqueue(startNode, 0)
@@ -194,7 +209,7 @@ function MapGPS() {
     while (!openSet.isEmpty()) {
       const current = openSet.dequeue();
 
-      if (current === endNode) {
+      if (current == endNode) {
         const path = [];
         let temp = current;
         while (temp in cameFrom) {
@@ -203,26 +218,25 @@ function MapGPS() {
         }
         path.push(startNode);
         return path.reverse();
-      }
-    }
+     }
 
-    const neighbors = adjacencyList[current] || [];
-    neighbors.forEach(({ neighbor, distance}) => {
-      const tentativeGScore = gScore[current] + distance;
+      const neighbours = adjacencyList[current] || [];
+      neighbours.forEach(({ neighbour, distance }) => {
 
-      if (!neighbour in gScore || tentativeGScore < gScore[neighbor]) {
-        cameFrom[neighbor] = current;
-        gScore[neighbor] = tentativeGScore;
+        const tentativeGScore = gScore[current] + distance;
 
-        fScore[neighbor] = gScore[neighbor] + heuristic(neighbor, endNode);
+        if (!(neighbour in gScore) || tentativeGScore < gScore[neighbour]) {
+          cameFrom[neighbour] = current;
+          gScore[neighbour] = tentativeGScore;
 
-        if (!openSet.contains(neighbor)) {
-          openSet.enqueue(neighbor, fScore[neighbor]);
+          fScore[neighbour] = gScore[neighbour] + heuristic(neighbour, endNode);
+
+          if (!openSet.contains(neighbour)) {
+            openSet.enqueue(neighbour, fScore[neighbour]);
+          }
         }
-      }
-
-    });
-  }
+      });
+    }
   return null;
 }
 
@@ -230,7 +244,7 @@ function MapGPS() {
     let nearestNode = null;
     let minDistance = Infinity;
 
-    for (const node in nodesMap) {
+    for (const nodeId in nodesMap) {
       const node = nodesMap[nodeId]
       const distance = calculateDistance(lat, lon, node.lat, node.lon);
 
@@ -241,6 +255,37 @@ function MapGPS() {
     }
     return nearestNode;
   }
+
+  useEffect(() => {
+    if (startNode && endNode && adjacencyList) {
+      const pathNodeIds = aStar(startNode, endNode, adjacencyList);
+      if (pathNodeIds) {
+        console.log(pathNodeIds)
+        const pathCoordinates = pathNodeIds.map(nodeId => {
+          const node = nodesMap[nodeId];
+          return {
+            lat: node.lat,
+            lon: node.lon,
+          };
+        });
+        console.log(pathCoordinates)
+        console.log(startNode, endNode)
+        setPath(pathCoordinates);
+      } else {
+        console.log("No path has been found");
+      }
+    }
+  }, [startNode, endNode, adjacencyList]);
+
+  useEffect(() => {
+    if (roadData && adjacencyList && selectedPoints.length > 1) {
+      const start = calculateNearestNode(selectedPoints[0].lat, selectedPoints[0].lng);
+      const end = calculateNearestNode(selectedPoints[1].lat, selectedPoints[1].lng);
+
+      setStartNode(Number(start));
+      setEndNode(Number(end));
+    }
+  }, [selectedPoints, roadData, adjacencyList]);
 
 
 
@@ -267,8 +312,17 @@ function MapGPS() {
         <Marker position={[51.76965, -1.254212]}></Marker>
         <Marker position={[51.74778, -1.23687]}></Marker>
         <Marker position={[51.749406, -1.26109]}></Marker>
+        <SelectPoints selectedPoints={selectedPoints} setSelectedPoints={setSelectedPoints}/>
+        {selectedPoints && selectedPoints.map((pos, id) => (
+          <Marker key={id} position={pos}>
+            <Popup>
+              {id === 0 ? 'Start Point': 'End Point'}
+            </Popup>
+          </Marker>
+        ))}
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
         <Route />
+        {path && <Polyline positions={path} color="blue"/>}
       </MapContainer>
     </div>
   );
