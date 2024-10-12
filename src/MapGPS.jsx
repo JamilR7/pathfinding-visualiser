@@ -52,7 +52,7 @@ function MapGPS() {
 
     const query = `
     [out:json];
-    way["highway"](around:2000,51.75803,-1.26201);
+    way["highway"](around:5000,51.75803,-1.26201);
     out body;     // First output for ways and their tags/nodes
     (._;>;);      // This grabs the related nodes (node IDs from ways)
     out skel qt;  // Output the node data with latitudes and longitudes
@@ -326,20 +326,11 @@ function MapGPS() {
         Detect location
       </button>
       {roadData ? <p>Road data loaded!</p> : <p>Loading road data...</p>}
-      <MapContainer style={{ height: "500px", width: "800%" }} center={[51.758038, -1.26201]} zoom={15} scrollWheelZoom={true}>
+      <MapContainer style={{ height: "1000px", width: "800%" }} center={[51.758038, -1.26201]} zoom={15} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[51.758038, -1.26201]}>
-          <Popup>
-            A pretty CSS3 popup. <br /> Easily customizable.
-          </Popup>
-        </Marker>
-        <Marker position={[51.761207, -1.267475]}></Marker>
-        <Marker position={[51.76965, -1.254212]}></Marker>
-        <Marker position={[51.74778, -1.23687]}></Marker>
-        <Marker position={[51.749406, -1.26109]}></Marker>
         <SelectPoints selectedPoints={selectedPoints} setSelectedPoints={setSelectedPoints}/>
         {selectedPoints && selectedPoints.map((pos, id) => (
           <Marker key={id} position={pos}>
@@ -349,7 +340,6 @@ function MapGPS() {
           </Marker>
         ))}
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
-        <Route />
         {evaluatingNode && <Polyline positions={evaluatingNode} 
             color="orange" 
             weight={3} 
@@ -361,3 +351,14 @@ function MapGPS() {
 }
 
 export default MapGPS
+
+// For later use
+// <Route />
+// <Marker position={[51.761207, -1.267475]}></Marker>
+// <Marker position={[51.76965, -1.254212]}></Marker>
+// <Marker position={[51.74778, -1.23687]}></Marker>
+// <Marker position={[51.749406, -1.26109]}></Marker>
+// <Marker position={[51.758038, -1.26201]}></Marker>
+//           <Popup>
+// A pretty CSS3 popup. <br /> Easily customizable.
+// </Popup>
