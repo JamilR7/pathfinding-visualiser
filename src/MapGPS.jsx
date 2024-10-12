@@ -11,6 +11,8 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
 //api
 import axios from 'axios'
+//animation
+
 
 
 function MapGPS() {
@@ -24,6 +26,7 @@ function MapGPS() {
   const [selectedPoints, setSelectedPoints] = useState([]);
   const [nodesMap, setNodesMap] = useState(null)
   const [evaluatingNode, setEvaluatingNode] = useState([])
+  const [isFinished, setIsFinished] = useState(false);
 
   const handleButtonClick = () => {
     setIsLocating(true);
@@ -213,7 +216,6 @@ function MapGPS() {
       if (cameFrom[current]) {
         const parent = cameFrom[current];
         
-        // Convert current and parent nodeId into coordinates
         const currentCoordinates = {
           lat: nodesMap[current].lat,
           lon: nodesMap[current].lon
@@ -224,12 +226,12 @@ function MapGPS() {
           lon: nodesMap[parent].lon
         };
     
-        // Set these coordinates in state to visualize
-        setEvaluatingNode(prevState => [
-          ...prevState, 
-          [parentCoordinates, currentCoordinates]
-        ]);
-        console.log("ev", evaluatingNode)
+        setTimeout(() => {
+          setEvaluatingNode(prevState => [
+            ...prevState, 
+            [parentCoordinates, currentCoordinates]
+          ]);
+        }, 2000);
       }
 
       if (current == endNode) {
@@ -293,7 +295,12 @@ function MapGPS() {
         });
         console.log(pathCoordinates)
         console.log(startNode, endNode)
-        setPath(pathCoordinates);
+        setIsFinished(true);
+
+        setTimeout(() => {
+          setPath(pathCoordinates);
+        }, 2500);
+
       } else {
         console.log("No path has been found");
       }
@@ -308,6 +315,7 @@ function MapGPS() {
       setStartNode(Number(start));
       setEndNode(Number(end));
       setEvaluatingNode([]);
+      setPath([])
     }
   }, [selectedPoints, roadData, adjacencyList]);
 
@@ -346,8 +354,11 @@ function MapGPS() {
         ))}
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
         <Route />
-        {evaluatingNode && <Polyline positions={evaluatingNode} color="grey"/>}
-        {path && <Polyline positions={path} color="blue"/>}
+        {evaluatingNode && <Polyline positions={evaluatingNode} 
+            color="orange" 
+            weight={3} 
+            dashArray="5, 5"/>}
+        {path && isFinished && <Polyline positions={path} color="green"/>}
       </MapContainer>
     </div>
   );
