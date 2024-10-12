@@ -23,6 +23,7 @@ function MapGPS() {
   const [endNode, setEndNode] = useState(null);
   const [selectedPoints, setSelectedPoints] = useState([]);
   const [nodesMap, setNodesMap] = useState(null)
+  const [evaluatingNode, setEvaluatingNode] = useState([])
 
   const handleButtonClick = () => {
     setIsLocating(true);
@@ -50,7 +51,7 @@ function MapGPS() {
 
     const query = `
     [out:json];
-    way["highway"](around:500,51.75803,-1.26201);
+    way["highway"](around:2000,51.75803,-1.26201);
     out body;     // First output for ways and their tags/nodes
     (._;>;);      // This grabs the related nodes (node IDs from ways)
     out skel qt;  // Output the node data with latitudes and longitudes
@@ -105,7 +106,7 @@ function MapGPS() {
 
         ways.forEach(way => {
           const wayNodes = way.nodes;
-          const checkOneWay = way.tags.oneway === 'yes' || way.tags.oneway === 'true';
+          const checkOneWay= false // = way.tags.oneway === 'yes' || way.tags.oneway === 'true';
 
           for (let i = 0; i < wayNodes.length - 1; i++) {
             const currentNodeId = wayNodes[i];
@@ -209,6 +210,28 @@ function MapGPS() {
     while (!openSet.isEmpty()) {
       const current = openSet.dequeue();
 
+      if (cameFrom[current]) {
+        const parent = cameFrom[current];
+        
+        // Convert current and parent nodeId into coordinates
+        const currentCoordinates = {
+          lat: nodesMap[current].lat,
+          lon: nodesMap[current].lon
+        };
+        
+        const parentCoordinates = {
+          lat: nodesMap[parent].lat,
+          lon: nodesMap[parent].lon
+        };
+    
+        // Set these coordinates in state to visualize
+        setEvaluatingNode(prevState => [
+          ...prevState, 
+          [parentCoordinates, currentCoordinates]
+        ]);
+        console.log("ev", evaluatingNode)
+      }
+
       if (current == endNode) {
         const path = [];
         let temp = current;
@@ -284,6 +307,7 @@ function MapGPS() {
 
       setStartNode(Number(start));
       setEndNode(Number(end));
+      setEvaluatingNode([]);
     }
   }, [selectedPoints, roadData, adjacencyList]);
 
@@ -322,6 +346,7 @@ function MapGPS() {
         ))}
         <FindUser isLocating={isLocating} setIsLocating={setIsLocating}></FindUser>
         <Route />
+        {evaluatingNode && <Polyline positions={evaluatingNode} color="grey"/>}
         {path && <Polyline positions={path} color="blue"/>}
       </MapContainer>
     </div>
