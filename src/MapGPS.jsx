@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup, useMap, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
@@ -12,8 +12,6 @@ import 'leaflet-routing-machine';
 //api
 import axios from 'axios'
 //animation
-
-
 
 function MapGPS() {
 
@@ -63,11 +61,11 @@ function MapGPS() {
     axios.post('https://overpass-api.de/api/interpreter', (query))
       .then(res => {
         setRoadData(res.data)
-        console.log(res.data)
+        //console.log(res.data)
 
         //grabbing ways
         const ways = res.data.elements.filter(element => element.type === 'way' && element.tags && element.tags.highway);
-        console.log('Ways:', ways);
+        //console.log('Ways:', ways);
 
         const newNodesMap = {}; //storing lat lon coordinates for all nodes
         const nodeUsageCount = {}; //checking whether a node is shared between other ways hence an intersection point
@@ -90,7 +88,7 @@ function MapGPS() {
           Object.keys(nodeUsageCount).filter(nodeId => nodeUsageCount[nodeId] > 1)
         );
 
-        console.log('Intersections:', IntersectionNodes);
+        //console.log('Intersections:', IntersectionNodes);
 
         //grabbing the node array making up ways and then for each node in that array we search for its corresponding nodeId to grab the lat and lon
         res.data.elements.forEach(element => {
@@ -105,7 +103,7 @@ function MapGPS() {
           }
         })
         setNodesMap(newNodesMap);
-        console.log('Nodes:', newNodesMap);
+        //console.log('Nodes:', newNodesMap);
 
         ways.forEach(way => {
           const wayNodes = way.nodes;
@@ -152,7 +150,7 @@ function MapGPS() {
       });
 
         setAdjacencyList(adjacency);
-        console.log("Adjacency List: ", adjacency);
+        //console.log("Adjacency List: ", adjacency);
       })
       .catch(err => {
         console.log(err)
@@ -170,7 +168,7 @@ function MapGPS() {
     }
 
     dequeue() {
-      return this.elements.shift().item; //pops first element of the array
+      return this.elements.shift().item; 
     }
 
     isEmpty() {
@@ -182,7 +180,7 @@ function MapGPS() {
     }
 
     getElements() {
-      return [...this.elements]; // Return a shallow copy of the elements
+      return [...this.elements];
     }
   }
 
@@ -285,7 +283,7 @@ function MapGPS() {
     if (startNode && endNode && adjacencyList) {
       const pathNodeIds = aStar(startNode, endNode, adjacencyList);
       if (pathNodeIds) {
-        console.log(pathNodeIds)
+        //console.log(pathNodeIds)
         const pathCoordinates = pathNodeIds.map(nodeId => {
           const node = nodesMap[nodeId];
           return {
@@ -318,8 +316,6 @@ function MapGPS() {
       setPath([])
     }
   }, [selectedPoints, roadData, adjacencyList]);
-
-
 
   return (
     <div>
@@ -365,35 +361,3 @@ function MapGPS() {
 }
 
 export default MapGPS
-
-// learn the pathfinding algorithms 
-// learn how to use deckGL
-
-// A* Search
-// for each cell, store h(x), f(x), g(x), (its own coordinates)
-// open set are nodes that still need to be evaluated
-// closed set are nodes do not
-// algo is complete when open set is empty (no solution) or if you arrive at the end (optimal path)
-// initialise start node / end node
-// openSet.push(start)
-// while (open set length is not empty) => keep going else no solution 
-// visualise the sets for debugging
-// current is the node that has the lowest f(x) in the open set
-// loop through open set and find the node whos f(x) is lowest i.e winner
-// if the winner == end - solution found
-// if its not the end then push to closedSet and remove from the open set
-// now begin evaluating the neighbours of current by adding to open set 
-// once we moved to a neighbour, we need to increase g(x) by distance between them, (g(x) = 0 at the start node), so + to what g(x) was previously (current.g + distance)
-// but only change g(x) if the neighbour isnt already in the closed set
-// the g(x) we change is temporary
-// because we need to check if the neighbour is already in the open set, then we need to compare g's to see which is better path 
-// if temp_g < neighbours g then set neighbour g to that temp_g
-// if its not in the open set then neighbour.g = temp_g and push that neighbour to the open set
-// the heuristic h = heuristic(neighbour, end) (educated guess to the end node in terms of distance)
-// function heuristic(a,b) 
-// find manhattan distance between the start and end node
-// the neighbours f(x) is g(x) + h(x) (score)
-// keep tracking of the path, neighbour.previous = current
-// var path, where current === end, path = [], temp = current, path.push(current), while (temp.previous exists), path.push(temp.previous), temp = temp.previous (backtracking)
-// loop through the path, path[i] show with some color (path blue, open set green, closed set red)
-// add var no_solution, if there is no solution set true, return
