@@ -1,6 +1,8 @@
 # Pathfinding Visualiser
 >>>>>>> 
 
+![GPS-animation](https://github.com/user-attachments/assets/80a25634-03fe-47ab-a34a-7d1fac545e33)
+
 A real-time shortest route visualiser on a map. You can select two markers and the algorithm will calculate the shortest route allowing you to see all paths being considered.
 
 Note: 
