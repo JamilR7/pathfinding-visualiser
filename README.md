@@ -1,5 +1,3 @@
-<<<<<<< 
-
 # Pathfinding Visualiser
 >>>>>>> 
 
@@ -12,7 +10,7 @@ Note:
 
 Plan to add more algorithms / cities / visual effects.
 
-# Pathfinding Algorithm
+# Algorithm
 
 Uses A* search algorithm which is an optimised Dijkstra's. It uses the Harsevine formula as its heuristic to get shortest path by considering the weights of edges.
 
