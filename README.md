@@ -15,6 +15,3 @@ Plan to add more algorithms / cities / visual effects.
 # Algorithm
 
 Uses A* search algorithm which is an optimised Dijkstra's. It uses the Harsevine formula as its heuristic to get shortest path by considering the weights of edges.
-
-# Cities supported
-Currently it will only extract nodes from Oxford, United Kingdom.
